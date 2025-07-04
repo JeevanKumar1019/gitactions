@@ -22,10 +22,11 @@ jobs:
       run: |
         echo "Launching EC2 instance..."
 
+        # Launch EC2 instance (Amazon Linux 2 in us-east-1)
         INSTANCE_ID=$(aws ec2 run-instances \
           --image-id ami-0f918f7e67a3323f0 \
           --instance-type t2.micro \
-          --key-name MyKeyPair \  # Replace with your key pair name
+          --key-name MyKeyPair \
           --security-groups default \
           --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=krishna}]' \
           --query 'Instances[0].InstanceId' \
@@ -37,7 +38,7 @@ jobs:
         aws ec2 wait instance-running --instance-ids $INSTANCE_ID
         echo "Instance is running"
 
-        # Get Public IP
+        # Get the public IP of the instance
         PUBLIC_IP=$(aws ec2 describe-instances \
           --instance-ids $INSTANCE_ID \
           --query 'Reservations[0].Instances[0].PublicIpAddress' \
@@ -45,7 +46,7 @@ jobs:
 
         echo "Instance Public IP: $PUBLIC_IP"
 
-        # Save instance info for next step
+        # Export to environment variables for later use
         echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
         echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
 
@@ -53,15 +54,15 @@ jobs:
       run: |
         echo "Creating IAM user 'vunathi'..."
 
-        # Create user (skip error if already exists)
-        aws iam create-user --user-name vunathi || echo "User may already exist"
+        # Create the user (ignore error if already exists)
+        aws iam create-user --user-name vunathi || echo "User 'vunathi' may already exist"
 
-        # Attach a managed policy (e.g., EC2 full access)
+        # Attach a managed policy (EC2 full access)
         aws iam attach-user-policy \
           --user-name vunathi \
           --policy-arn arn:aws:iam::aws:policy/AmazonEC2FullAccess
 
-        # Optional: create access keys for 'vunathi'
+        # Create access keys (handle carefully)
         aws iam create-access-key --user-name vunathi > vunathi_keys.json
 
-        echo "IAM user 'vunathi' created successfully."
+        echo "IAM user 'vunathi' created successfully and keys stored in vunathi_keys.json"
