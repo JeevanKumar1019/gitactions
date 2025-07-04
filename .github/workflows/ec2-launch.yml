@@ -1,10 +1,10 @@
-name: Launch EC2 Instance
+name: Launch EC2 Instance and Create IAM User
 
 on:
-  workflow_dispatch:  # Manually triggered
+  workflow_dispatch:  # Trigger manually
 
 jobs:
-  launch-instance:
+  launch-and-create:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,15 +25,15 @@ jobs:
         INSTANCE_ID=$(aws ec2 run-instances \
           --image-id ami-0f918f7e67a3323f0 \
           --instance-type t2.micro \
-          --key-name MyKeyPair \
+          --key-name MyKeyPair \  # Replace with your key pair name
           --security-groups default \
-          --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=GitHub-EC2}]' \
+          --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=krishna}]' \
           --query 'Instances[0].InstanceId' \
           --output text)
 
         echo "EC2 Instance Launched with ID: $INSTANCE_ID"
 
-        # Wait for the instance to start
+        # Wait until the instance is running
         aws ec2 wait instance-running --instance-ids $INSTANCE_ID
         echo "Instance is running"
 
@@ -44,3 +44,24 @@ jobs:
           --output text)
 
         echo "Instance Public IP: $PUBLIC_IP"
+
+        # Save instance info for next step
+        echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
+        echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
+
+    - name: Create IAM User (vunathi)
+      run: |
+        echo "Creating IAM user 'vunathi'..."
+
+        # Create user (skip error if already exists)
+        aws iam create-user --user-name vunathi || echo "User may already exist"
+
+        # Attach a managed policy (e.g., EC2 full access)
+        aws iam attach-user-policy \
+          --user-name vunathi \
+          --policy-arn arn:aws:iam::aws:policy/AmazonEC2FullAccess
+
+        # Optional: create access keys for 'vunathi'
+        aws iam create-access-key --user-name vunathi > vunathi_keys.json
+
+        echo "IAM user 'vunathi' created successfully."
