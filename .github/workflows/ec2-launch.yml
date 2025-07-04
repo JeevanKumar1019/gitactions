@@ -1,0 +1,46 @@
+name: Launch EC2 Instance
+
+on:
+  workflow_dispatch:  # Manually triggered
+
+jobs:
+  launch-instance:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repo
+      uses: actions/checkout@v4
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Launch EC2 Instance
+      run: |
+        echo "Launching EC2 instance..."
+
+        INSTANCE_ID=$(aws ec2 run-instances \
+          --image-id ami-0f918f7e67a3323f0 \
+          --instance-type t2.micro \
+          --key-name MyKeyPair \
+          --security-groups default \
+          --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=GitHub-EC2}]' \
+          --query 'Instances[0].InstanceId' \
+          --output text)
+
+        echo "EC2 Instance Launched with ID: $INSTANCE_ID"
+
+        # Wait for the instance to start
+        aws ec2 wait instance-running --instance-ids $INSTANCE_ID
+        echo "Instance is running"
+
+        # Get Public IP
+        PUBLIC_IP=$(aws ec2 describe-instances \
+          --instance-ids $INSTANCE_ID \
+          --query 'Reservations[0].Instances[0].PublicIpAddress' \
+          --output text)
+
+        echo "Instance Public IP: $PUBLIC_IP"
