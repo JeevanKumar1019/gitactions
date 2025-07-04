@@ -23,9 +23,9 @@ jobs:
         echo "Launching EC2 instance..."
 
         INSTANCE_ID=$(aws ec2 run-instances \
-          --image-id ami-0f918f7e67a3323f0 \  # Amazon Linux 2 in us-east-1
+          --image-id ami-0f918f7e67a3323f0 \
           --instance-type t2.micro \
-          --key-name MyKeyPair \  # Replace with your key pair name
+          --key-name MyKeyPair \
           --security-groups default \
           --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=GitHub-EC2}]' \
           --query 'Instances[0].InstanceId' \
@@ -34,12 +34,12 @@ jobs:
         echo "EC2 Instance Launched with ID: $INSTANCE_ID"
 
         # Optional: Wait until the instance is running
-        aws ec2 wait instance-running --instance-ids $INSTANCE_ID
+        aws ec2 wait instance-running --instance-ids "$INSTANCE_ID"
         echo "Instance is running"
 
-        # Optional: Describe instance public IP
+        # Optional: Get public IP
         PUBLIC_IP=$(aws ec2 describe-instances \
-          --instance-ids $INSTANCE_ID \
+          --instance-ids "$INSTANCE_ID" \
           --query 'Reservations[0].Instances[0].PublicIpAddress' \
           --output text)
 
