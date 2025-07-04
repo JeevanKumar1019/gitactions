@@ -27,7 +27,7 @@ jobs:
           --instance-type t2.micro \
           --key-name MyKeyPair \
           --security-groups default \
-          --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=GitHub-EC2}]' \
+          --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Jeevan}]' \
           --query 'Instances[0].InstanceId' \
           --output text)
 
